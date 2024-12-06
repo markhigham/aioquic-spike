@@ -53,11 +53,11 @@ class URL:
 
 class HttpRequest:
     def __init__(
-        self,
-        method: str,
-        url: URL,
-        content: bytes = b"",
-        headers: Optional[Dict] = None,
+            self,
+            method: str,
+            url: URL,
+            content: bytes = b"",
+            headers: Optional[Dict] = None,
     ) -> None:
         if headers is None:
             headers = {}
@@ -70,7 +70,7 @@ class HttpRequest:
 
 class WebSocket:
     def __init__(
-        self, http: HttpConnection, stream_id: int, transmit: Callable[[], None]
+            self, http: HttpConnection, stream_id: int, transmit: Callable[[], None]
     ) -> None:
         self.http = http
         self.queue: asyncio.Queue[str] = asyncio.Queue()
@@ -145,7 +145,7 @@ class HttpClient(QuicConnectionProtocol):
         )
 
     async def post(
-        self, url: str, data: bytes, headers: Optional[Dict] = None
+            self, url: str, data: bytes, headers: Optional[Dict] = None
     ) -> Deque[H3Event]:
         """
         Perform a POST request.
@@ -155,7 +155,7 @@ class HttpClient(QuicConnectionProtocol):
         )
 
     async def websocket(
-        self, url: str, subprotocols: Optional[List[str]] = None
+            self, url: str, subprotocols: Optional[List[str]] = None
     ) -> WebSocket:
         """
         Open a WebSocket.
@@ -221,13 +221,13 @@ class HttpClient(QuicConnectionProtocol):
         self._http.send_headers(
             stream_id=stream_id,
             headers=[
-                (b":method", request.method.encode()),
-                (b":scheme", request.url.scheme.encode()),
-                (b":authority", request.url.authority.encode()),
-                (b":path", request.url.full_path.encode()),
-                (b"user-agent", USER_AGENT.encode()),
-            ]
-            + [(k.encode(), v.encode()) for (k, v) in request.headers.items()],
+                        (b":method", request.method.encode()),
+                        (b":scheme", request.url.scheme.encode()),
+                        (b":authority", request.url.authority.encode()),
+                        (b":path", request.url.full_path.encode()),
+                        (b"user-agent", USER_AGENT.encode()),
+                    ]
+                    + [(k.encode(), v.encode()) for (k, v) in request.headers.items()],
             end_stream=not request.content,
         )
         if request.content:
@@ -244,16 +244,18 @@ class HttpClient(QuicConnectionProtocol):
 
 
 async def perform_http_request(
-    client: HttpClient,
-    url: str,
-    data: Optional[str],
-    include: bool,
-    output_dir: Optional[str],
+        client: HttpClient,
+        url: str,
+        data: Optional[str],
+        include: bool,
+        output_dir: Optional[str],
+        file_contents: Optional[bytes]
 ) -> None:
     # perform request
     start = time.time()
-    if data is not None:
-        data_bytes = data.encode()
+    if data is not None or file_contents is not None:
+        print("There is data")
+        data_bytes = file_contents if file_contents else data.encode()
         http_events = await client.post(
             url,
             data=data_bytes,
@@ -290,9 +292,9 @@ async def perform_http_request(
 
 
 def process_http_pushes(
-    client: HttpClient,
-    include: bool,
-    output_dir: Optional[str],
+        client: HttpClient,
+        include: bool,
+        output_dir: Optional[str],
 ) -> None:
     for _, http_events in client.pushes.items():
         method = ""
@@ -321,7 +323,7 @@ def process_http_pushes(
 
 
 def write_response(
-    http_events: Deque[H3Event], output_file: BinaryIO, include: bool
+        http_events: Deque[H3Event], output_file: BinaryIO, include: bool
 ) -> None:
     for http_event in http_events:
         if isinstance(http_event, HeadersReceived) and include:
@@ -346,13 +348,14 @@ def save_session_ticket(ticket: SessionTicket) -> None:
 
 
 async def main(
-    configuration: QuicConfiguration,
-    urls: List[str],
-    data: Optional[str],
-    include: bool,
-    output_dir: Optional[str],
-    local_port: int,
-    zero_rtt: bool,
+        configuration: QuicConfiguration,
+        urls: List[str],
+        data: Optional[str],
+        include: bool,
+        output_dir: Optional[str],
+        local_port: int,
+        zero_rtt: bool,
+        file_contents: Optional[bytes]
 ) -> None:
     # parse URL
     parsed = urlparse(urls[0])
@@ -386,13 +389,13 @@ async def main(
         urls[i] = _p.geturl()
 
     async with connect(
-        host,
-        port,
-        configuration=configuration,
-        create_protocol=HttpClient,
-        session_ticket_handler=save_session_ticket,
-        local_port=local_port,
-        wait_connected=not zero_rtt,
+            host,
+            port,
+            configuration=configuration,
+            create_protocol=HttpClient,
+            session_ticket_handler=save_session_ticket,
+            local_port=local_port,
+            wait_connected=not zero_rtt,
     ) as client:
         client = cast(HttpClient, client)
 
@@ -418,6 +421,7 @@ async def main(
                     data=data,
                     include=include,
                     output_dir=output_dir,
+                    file_contents=file_contents,
                 )
                 for url in urls
             ]
@@ -539,6 +543,10 @@ if __name__ == "__main__":
         "--zero-rtt", action="store_true", help="try to send requests using 0-RTT"
     )
 
+    parser.add_argument(
+        "-f", "--file", type=str, help="path to the file to send via HTTP POST"
+    )
+
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -589,8 +597,19 @@ if __name__ == "__main__":
     if args.certificate is not None:
         configuration.load_cert_chain(args.certificate, args.private_key)
 
+    file_data = None
+
+    if args.file:
+        if not os.path.isfile(args.file):
+            raise Exception(f"{args.file} is not a valid file")
+
+        with open(args.file, "rb") as file:
+            print(f"Reading {args.file}")
+            file_data = file.read()
+
     if uvloop is not None:
         uvloop.install()
+
     asyncio.run(
         main(
             configuration=configuration,
@@ -600,5 +619,6 @@ if __name__ == "__main__":
             output_dir=args.output_dir,
             local_port=args.local_port,
             zero_rtt=args.zero_rtt,
+            file_contents=file_data
         )
     )
