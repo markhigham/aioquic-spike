@@ -57,7 +57,6 @@ files = [
 ]
 
 [package.dependencies]
-exceptiongroup = {version = ">=1.0.2", markers = "python_version < \"3.11\""}
 idna = ">=2.8"
 sniffio = ">=1.1"
 typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
@@ -237,20 +236,6 @@ files = [
     {file = "dnslib-0.9.25-py3-none-any.whl", hash = "sha256:013699e4740ebfb6908060b6216c6b932ba3a2747bc10526796887c0ffb4922d"},
     {file = "dnslib-0.9.25.tar.gz", hash = "sha256:687df2086e28086cb32b947dafa4c0a4e613f1429baa3be61d8b94e69418b4ef"},
 ]
-
-[[package]]
-name = "exceptiongroup"
-version = "1.2.2"
-description = "Backport of PEP 654 (exception groups)"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "exceptiongroup-1.2.2-py3-none-any.whl", hash = "sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b"},
-    {file = "exceptiongroup-1.2.2.tar.gz", hash = "sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc"},
-]
-
-[package.extras]
-test = ["pytest (>=6)"]
 
 [[package]]
 name = "h11"
@@ -524,5 +509,5 @@ h11 = ">=0.9.0,<1"
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "c77892cac08a42ac780100287a07be09547480fe604c788c8cb7fe975f556405"
+python-versions = "^3.12"
+content-hash = "aa371313dfb8be5bf397bc7d4de585f073c6745bd4ab82367ab77e632ec428f1"
