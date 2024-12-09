@@ -1,0 +1,22 @@
+services:
+  server:
+    build:
+      context: .
+#    volumes:
+#      - ./certs:/certs
+#      - ./examples:/app/examples
+#      - ./tests:/app/tests
+    ports:
+      - "4433:4433"
+    command:
+      - python /app/examples/http3_server.py
+
+  client:
+      build:
+        context: .
+      volumes:
+        - ./certs:/certs
+        - ./examples:/app/examples
+        - ./tests:/app/tests
+      depends_on:
+        - server

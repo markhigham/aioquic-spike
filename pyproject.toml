@@ -15,6 +15,9 @@ wsproto = "^1.2.0"
 aioquic = "^1.2.0"
 
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
