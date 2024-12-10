@@ -31,6 +31,26 @@ async def homepage(request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+async def upload(request):
+    content = await request.body()
+    print("upload: received %d bytes" % len(content))
+    # Assuming the filename is sent in the 'X-Filename' header
+    # super hacky. this is _not_ how we'd really do it
+    filename = request.headers.get("X-Filename")
+    if filename is None:
+        return PlainTextResponse("Filename not provided", status_code=400)
+
+    filename = os.path.basename(filename)
+
+    file_path = os.path.join(STATIC_ROOT, filename)
+    with open(file_path, "wb") as file:
+        file.write(content)
+
+    print(f"upload: saved {len(content)} bytes to {file_path}")
+    return PlainTextResponse("File uploaded successfully")
+
+
+
 async def echo(request):
     """
     HTTP echo endpoint.
@@ -133,6 +153,7 @@ starlette = Starlette(
         Route("/", homepage),
         Route("/{size:int}", padding),
         Route("/echo", echo, methods=["POST"]),
+        Route("/upload", upload, methods=["POST"]),
         Route("/logs", logs),
         WebSocketRoute("/ws", ws),
         Mount(STATIC_URL, StaticFiles(directory=STATIC_ROOT, html=True)),
